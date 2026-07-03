@@ -86,32 +86,3 @@ Because a pristine test tenant without a paid, active Azure infrastructure subsc
 
 **Next Deployment Phase:** The laboratory policy will target an enterprise application guaranteed to exist natively in the sandbox environment: **Office 365** (or **Microsoft Graph Explorer**). The Conditional Access (CA) policy will target the `ABAC-Engineers-Tier3-Quantum` group, map the clearance tiers to standard directory **Extension Attributes (EA)**, and demonstrate a fully operational user attribute-filtering gate without requiring external Azure infrastructure.
 
----
-
-## System Validator: Constraints & Edge Cases
-
-### 1. Access Denied Triggers
-* **Trigger 01:** An administrator possessing the Global Administrator role but lacking the Attribute Assignment Administrator (AAA) role attempts to update Alpha Engineer's attributes. This action triggers a hard `Access Denied` error at the UI plane because the active Access Token (AT) lacks the specific data-plane assignment scope.
-
-### 2. Negative Constraints
-* **Constraint 01:** Microsoft Entra ID (MEID) Conditional Access (CA) policies cannot read *User-level* Custom Security Attributes (CSA) natively during the initial user sign-in phase. User-level Custom Security Attributes (CSA) are structurally engineered for downstream Azure Data-Plane Role-Based Access Control (RBAC) conditions.
-
-### 3. The Inverse Logic
-* To evaluate user attributes at the initial identity-plane login boundary using Conditional Access (CA), an organization must utilize standard directory **Extension Attributes (EA)** (such as `extensionAttribute1`). While Custom Security Attributes (CSA) fail to evaluate at the Conditional Access (CA) login boundary, Extension Attributes (EA) successfully evaluate through the native **Filter for users** condition engine.
-
-### 4. Hard Booleans
-* `User.Membership -in Group` ➔ **TRUE** for both Alpha Engineer and Bravo Engineer.
-* `User.ExtensionAttribute1 -eq "Tier3"` ➔ **TRUE** for Alpha Engineer, **FALSE** for Bravo Engineer.
-
----
-
-## Section 11: Clinical Case Studies
-
-### Case Study 01: The Token Stale-State Authorization Failure
-* **Configuration:** 
-    * Policy: Tenant Directory Role Assignment.
-    * Identity: Administrator account.
-    * Device State: Unmanaged workstation.
-* **Action:** The user account is assigned the Attribute Definition Administrator (ADA) role via the portal interface. The administrator immediately attempts to create a new Attribute Set inside the same browser window session without logging out or utilizing an Incognito Window.
-* **Outcome:** `Hard Boolean: Failure`
-* **Technical Logic:** The user's current session relies on an existing Access Token (AT) and Refresh Token (RT) issued *prior* to the role assignment event. Because Access Tokens (AT) are immutable objects that cannot dynamically ingest directory role modifications mid-lifecycle, the current Access Token (AT) contains no claims for the Attribute Definition Administrator (ADA) role. The directory target reads the token schema, notes the missing claim token, and blocks the write command. The root cause is remedied only when a new authentication handshake occurs via an Incognito Window, forcing the token issuing service to generate a fresh Access Token (AT) embedded with the active role claims.
