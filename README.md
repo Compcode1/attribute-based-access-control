@@ -86,3 +86,23 @@ Because a pristine test tenant without a paid, active Azure infrastructure subsc
 
 **Next Deployment Phase:** The laboratory policy will target an enterprise application guaranteed to exist natively in the sandbox environment: **Office 365** (or **Microsoft Graph Explorer**). The Conditional Access (CA) policy will target the `ABAC-Engineers-Tier3-Quantum` group, map the clearance tiers to standard directory **Extension Attributes (EA)**, and demonstrate a fully operational user attribute-filtering gate without requiring external Azure infrastructure.
 
+## Phase 5: The Extension Attribute Pivot & Enforcement Plan
+
+Because the automated sorting machine in Entra ID cannot read *Custom* Security Attributes, we are shifting our metadata strategy to standard **Extension Attributes** (named `extensionAttribute1` through `15`). Entra's Conditional Access engine *can* read these attributes natively, allowing us to build our "two-dimensional lock" (Rank + Project) entirely within the identity portal.
+
+### Step 1: Map and Stamp the New Profile Tags
+We will use the portal to update our engineers' profiles using standard directory fields:
+* **Alpha Engineer:** `extensionAttribute1` (Rank) = `Tier3` | `extensionAttribute2` (Project) = `ProjectQuantum`
+* **Bravo Engineer:** `extensionAttribute1` (Rank) = `Tier1` | `extensionAttribute2` (Project) = `ProjectLegacy`
+
+### Step 2: Build the Smart Filtering Gate
+We will configure a Conditional Access policy that targets our manual bucket group (`ABAC-Engineers-Tier3-Quantum`) and looks at the **Office 365** application suite. 
+
+Instead of blocking everyone in the group blindly, we will use the **Filter for users** rule engine to create an automated checklist:
+* *The Rule:* "If a user is in this group, BUT their Rank (`extensionAttribute1`) does not equal `Tier3` OR their Project (`extensionAttribute2`) does not equal `ProjectQuantum`, trigger the security gate."
+* *The Control:* **Block Access**.
+
+### Step 3: Validate the Perimeter (The Live Test)
+We will log in as both engineers in separate private windows to witness the live execution logic:
+* **Bravo Engineer Test:** Bravo attempts to log into Office 365. The engine checks their tags, sees `Tier1` and `ProjectLegacy`, flags them as a mismatch, and drops a hard **Access Denied** block screen.
+* **Alpha Engineer Test:** Alpha attempts to log into Office 365. The engine checks their tags, sees an exact match for `Tier3` and `ProjectQuantum`, bypasses the block rule, and successfully **Authorizes** the login.
