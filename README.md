@@ -93,7 +93,7 @@ Because the automated sorting machine in Entra ID cannot read *Custom* Security 
 ### Step 1: Map and Stamp the New Profile Tags
 We will use the portal to update our engineers' profiles using standard directory fields:
 * **Alpha Engineer:** `extensionAttribute1` (Rank) = `Tier3` | `extensionAttribute2` (Project) = `ProjectQuantum`
-* **Bravo Engineer:** `extensionAttribute1` (Rank) = `Tier1` | `extensionAttribute2` (Project) = `ProjectLegacy`
+* **Bravo Engineer:** `extensionAttribute1` (Rank) = `Tier1` | `extensionAttribute2` (Project) = `ProjectLegacy`  
 
 ### Step 2: Build the Smart Filtering Gate
 We will configure a Conditional Access policy that targets our manual bucket group (`ABAC-Engineers-Tier3-Quantum`) and looks at the **Office 365** application suite. 
