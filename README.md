@@ -74,7 +74,7 @@ This step was implemented to pivot around a native platform constraint: the Micr
 
 * **Failure State:** Attempting to build an automated dynamic group query referencing `user.CustomSecurityAttributes` results in an immediate syntax validation failure, leaving the group deployment incomplete.
 * **Success State (The Inverse Logic):** Utilizing a standard assigned group container allows the group object to successfully save and hold both engineers simultaneously, shifting the filtering logic down to the policy enforcement point.
-
+It boils down to a basic feature limitation: Entra’s automated sorting machine (the dynamic group engine) is completely blind to these new custom security tags. If you try to write an automated rule using them, the system just errors out because it doesn't look at that data. To bypass this roadblock, we skip the automation entirely and build a plain, manual bucket (a static group) to throw both engineers into. We aren't using this group to filter them; we are just using it as a net to bundle them together so we can push them both to our final security gate. That gate can read their individual tags, so it will successfully block Bravo while letting Alpha through.
 ### 3. Downstream Policy Leverage
 This group acts as the macro-target for the Conditional Access (CA) policy. By targeting this group, both Alpha Engineer and Bravo Engineer are forced into the exact same security evaluation gate, allowing the policy engine to prove how it handles their differing user metadata profiles.
 
