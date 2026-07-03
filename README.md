@@ -4,7 +4,7 @@ This deployment manual serves as the definitive technical reference and architec
 
 ---
 
-## Phase 1: Administrative Elevation (The Identity Bootstrap)
+## Phase 1: Administrative Elevation (The Identity Bootstrap)  
 
 ### 1. Technical Implementation Summary
 Two highly specialized, data-plane administrative roles were explicitly assigned to the global administrator identity within the Microsoft Entra ID (MEID) directory tenant:
