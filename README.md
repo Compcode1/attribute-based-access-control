@@ -35,45 +35,6 @@ A custom metadata container called an Attribute Set was provisioned and named ex
    Think of this as a two-dimensional lock designed to enforce strict "need-to-know" security: one axis is vertical rank, and the other is horizontal team assignment. The ClearanceLevel acts as your vertical ladder (Tier 1, 2, or 3)—you can only occupy one rung at a time, and we use a rigid dropdown so a simple typo can't accidentally grant someone executive access. The ProjectCode is your horizontal boundary; because an engineer can work on three different projects simultaneously, this attribute needs to hold a flexible list of text values that change as projects spin up and down. By combining them, you create a bulletproof gate: an engineer can only access a sensitive file if they have both the required rank and an active assignment to that specific project, completely preventing a high-clearance engineer from snooping on teams they don't belong to.
 
 
-### Step 2: Build the Smart Filtering Gate
-Because the Microsoft Entra ID (MEID) Conditional Access (CA) policy engine cannot parse raw string logic directly within its user assignment tab, we implement a production-grade **Include/Exclude Pattern**. We first build a dynamic security group to automatically discover and group authorized attributes, then we use a Conditional Access (CA) policy to block our general testing group while explicitly excluding the dynamically authorized group.
-
-#### Part A: Provision the Dynamic Authorization Group
-1. **Navigate to Groups:** In the left-hand menu of the Microsoft Entra admin center (MEAC), expand **Identity** > **Groups** > select **All groups**, and click **New group**.
-2. **Configure Baseline Parameters:**
-   * **Group type:** Select `Security`.
-   * **Group name:** Type exactly: `ABAC-Authorized-Tier3-Quantum`
-   * **Membership type:** Change the dropdown from *Assigned* to `Dynamic User`.
-3. **Construct the Attribute Query:**
-   * Under the **Dynamic user members** section, click the **Add dynamic query** hyperlink.
-   * On the dynamic membership rules page, look at the top right of the rule builder and click the **Edit** button next to *Rule syntax*.
-   * Clear any existing text in the flyout window and paste this exact engineering rule:
-     `(user.jobTitle -eq "Tier3") -and (user.department -eq "ProjectQuantum")`
-   * Click **OK** to close the syntax window, then click **Save** at the top of the query builder blade.
-4. **Finalize Group:** Click the blue **Create** button at the bottom of the main page. (The directory engine will now background-scan your users; Alpha Engineer will automatically join this group, while Bravo Engineer will be skipped).
-
-#### Part B: Configure the Conditional Access Policy Perimeter
-1. **Navigate to Policies:** In the left menu, go to **Identity** > **Protection** > **Conditional Access** (or **Conditional Access** > **Policies**).
-2. **Open Container:** Click **+ New policy** (or click your existing `CA-Block-Engineering-Boundary` policy container to open it).
-3. **Configure User Scope (The Include/Exclude Gate):**
-   * Under *Assignments*, click on **Users or workload identities**.
-   * On the active **Include** tab, choose the radio button for **Select users and groups**, and check the box for **Users and groups**.
-   * A search bar will appear below. Search for and select your macro container group: `ABAC-Engineers-Tier3-Quantum`.
-   * Look directly to the right and click on the **Exclude** tab.
-   * Choose the radio button for **Select users and groups**, check the box for **Users and groups**, search for and select your new dynamic group: `ABAC-Authorized-Tier3-Quantum`. Click the blue **Select** button.
-4. **Target the Resource Plane:**
-   * Click on **Target resources** (formerly Cloud apps). Ensure the top dropdown is set to **Cloud apps**.
-   * On the **Include** tab, select the radio button for **Select resources**.
-   * Click the blue **Select** hyperlink that appears below. In the right-hand flyout search bar, type exactly: `Office 365`.
-   * Check the box next to **Office 365** in the results list, and click the blue **Select** button at the bottom.
-5. **Enforce the Block Control:**
-   * Under the *Access controls* section at the bottom, click on **Grant**.
-   * In the right-hand panel, select the radio button for **Block access**.
-   * Click the green **Select** button at the bottom of the panel.
-6. **Activate the Policy:**
-   * Locate the **Enable policy** toggle at the very bottom of the main screen.
-   * Flip the toggle from *Report-only* to **On**.
-   * Click the blue **Create** (or **Save**) button.
 
 ### 3. Downstream Policy Leverage
 These two custom attributes function as cryptographic access tokens. In downstream validation phases, access policies evaluate whether the requesting user object possesses these exact attribute values, eliminating the need to write complex, hardcoded rules tracking explicit user identities.
@@ -141,9 +102,44 @@ We manually update our test engineers' profiles within the Microsoft Entra admin
    * Click the blue **Save** button at the very bottom of the screen.
 
 ### Step 2: Build the Smart Filtering Gate
-We configure a Conditional Access policy targeting our manual container group (`ABAC-Engineers-Tier3-Quantum`) against the **Office 365** application suite. Instead of dropping a blanket block on the group, the policy engine uses a **Filter for users** rule to evaluate the individual profile fields:
-* **The Evaluation Rule:** "If a user belongs to this group, BUT their Job Title does not equal `Tier3` OR their Department does not equal `ProjectQuantum`, capture the session."
-* **Enforcement Control:** **Block Access**.
+Because the Microsoft Entra ID (MEID) Conditional Access (CA) policy engine cannot parse raw string logic directly within its user assignment tab, we implement a production-grade **Include/Exclude Pattern**. We first build a dynamic security group to automatically discover and group authorized attributes, then we use a Conditional Access (CA) policy to block our general testing group while explicitly excluding the dynamically authorized group.
+
+#### Part A: Provision the Dynamic Authorization Group
+1. **Navigate to Groups:** In the left-hand menu of the Microsoft Entra admin center (MEAC), expand **Identity** > **Groups** > select **All groups**, and click **New group**.
+2. **Configure Baseline Parameters:**
+   * **Group type:** Select `Security`.
+   * **Group name:** Type exactly: `ABAC-Authorized-Tier3-Quantum`
+   * **Membership type:** Change the dropdown from *Assigned* to `Dynamic User`.
+3. **Construct the Attribute Query:**
+   * Under the **Dynamic user members** section, click the **Add dynamic query** hyperlink.
+   * On the dynamic membership rules page, look at the top right of the rule builder and click the **Edit** button next to *Rule syntax*.
+   * Clear any existing text in the flyout window and paste this exact engineering rule:
+     `(user.jobTitle -eq "Tier3") -and (user.department -eq "ProjectQuantum")`
+   * Click **OK** to close the syntax window, then click **Save** at the top of the query builder blade.
+4. **Finalize Group:** Click the blue **Create** button at the bottom of the main page. (The directory engine will now background-scan your users; Alpha Engineer will automatically join this group, while Bravo Engineer will be skipped).
+
+#### Part B: Configure the Conditional Access Policy Perimeter
+1. **Navigate to Policies:** In the left menu, go to **Identity** > **Protection** > **Conditional Access** (or **Conditional Access** > **Policies**).
+2. **Open Container:** Click **+ New policy** (or click your existing `CA-Block-Engineering-Boundary` policy container to open it).
+3. **Configure User Scope (The Include/Exclude Gate):**
+   * Under *Assignments*, click on **Users or workload identities**.
+   * On the active **Include** tab, choose the radio button for **Select users and groups**, and check the box for **Users and groups**.
+   * A search bar will appear below. Search for and select your macro container group: `ABAC-Engineers-Tier3-Quantum`.
+   * Look directly to the right and click on the **Exclude** tab.
+   * Choose the radio button for **Select users and groups**, check the box for **Users and groups**, search for and select your new dynamic group: `ABAC-Authorized-Tier3-Quantum`. Click the blue **Select** button.
+4. **Target the Resource Plane:**
+   * Click on **Target resources** (formerly Cloud apps). Ensure the top dropdown is set to **Cloud apps**.
+   * On the **Include** tab, select the radio button for **Select resources**.
+   * Click the blue **Select** hyperlink that appears below. In the right-hand flyout search bar, type exactly: `Office 365`.
+   * Check the box next to **Office 365** in the results list, and click the blue **Select** button at the bottom.
+5. **Enforce the Block Control:**
+   * Under the *Access controls* section at the bottom, click on **Grant**.
+   * In the right-hand panel, select the radio button for **Block access**.
+   * Click the green **Select** button at the bottom of the panel.
+6. **Activate the Policy:**
+   * Locate the **Enable policy** toggle at the very bottom of the main screen.
+   * Flip the toggle from *Report-only* to **On**.
+   * Click the blue **Create** (or **Save**) button.
 
 ### Step 3: Validate the Perimeter (The Live Test)
 We execute separate private browser sessions to witness the identity evaluation in real-time:
