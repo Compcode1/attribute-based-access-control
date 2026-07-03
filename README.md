@@ -19,7 +19,6 @@ By default, the Global Administrator role possesses no inherent read or write pr
 * **Failure State:** Attempting to view or modify custom attributes without active ADA or AAA directory roles causes an immediate `Access Denied` trigger due to the absence of data-plane claims within the active Access Token (AT).
 * **Success State (The Inverse Logic):** Active ADA and AAA directory assignments ensure that the newly generated Access Token (AT) carries explicit schema-write claims, successfully unlocking the attribute definition and object assignment menus.
 
-Think of this as a two-dimensional lock designed to enforce strict "need-to-know" security: one axis is vertical rank, and the other is horizontal team assignment. The ClearanceLevel acts as your vertical ladder (Tier 1, 2, or 3)—you can only occupy one rung at a time, and we use a rigid dropdown so a simple typo can't accidentally grant someone executive access. The ProjectCode is your horizontal boundary; because an engineer can work on three different projects simultaneously, this attribute needs to hold a flexible list of text values that change as projects spin up and down. By combining them, you create a bulletproof gate: an engineer can only access a sensitive file if they have both the required rank and an active assignment to that specific project, completely preventing a high-clearance engineer from snooping on teams they don't belong to.
 
 ### 3. Downstream Policy Leverage
 These elevated administrative privileges establish the root authority required to act as the schema architect. This identity capability is leveraged throughout the lifecycle to manage, audit, and append metadata parameters to directory objects.
@@ -32,7 +31,9 @@ These elevated administrative privileges establish the root authority required t
 A custom metadata container called an Attribute Set was provisioned and named exactly `EngineeringMetadata`. Inside this structural container, two distinct security keys were defined:
 1. `ClearanceLevel`: A single-value string schema constrained by pre-defined dropdown parameters (`Tier1`, `Tier2`, `Tier3`).
 2. `ProjectCode`: A multi-value string array engineered to accept freeform text string inputs.
-3. 
+
+   Think of this as a two-dimensional lock designed to enforce strict "need-to-know" security: one axis is vertical rank, and the other is horizontal team assignment. The ClearanceLevel acts as your vertical ladder (Tier 1, 2, or 3)—you can only occupy one rung at a time, and we use a rigid dropdown so a simple typo can't accidentally grant someone executive access. The ProjectCode is your horizontal boundary; because an engineer can work on three different projects simultaneously, this attribute needs to hold a flexible list of text values that change as projects spin up and down. By combining them, you create a bulletproof gate: an engineer can only access a sensitive file if they have both the required rank and an active assignment to that specific project, completely preventing a high-clearance engineer from snooping on teams they don't belong to.
+
 
 ### 2. Architectural Rationale
 Before user identities can be tagged with security metadata, the structural blueprint must exist within the tenant schema. A pre-defined dropdown pattern was selected for `ClearanceLevel` to eliminate typographical human errors that would break downstream authorization logic. A multi-value string array was selected for `ProjectCode` to allow a single engineering identity to hold multiple project tags concurrently.
