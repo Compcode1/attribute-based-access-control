@@ -119,14 +119,9 @@ Because the Microsoft Entra ID (MEID) Conditional Access (CA) policy engine cann
 4. **Finalize Group:** Click the blue **Create** button at the bottom of the main page. (The directory engine will now background-scan your users; Alpha Engineer will automatically join this group, while Bravo Engineer will be skipped).
 
 #### Part B: Configure the Conditional Access Policy Perimeter
-1. **Navigate to Policies:** In the left menu, go to **Identity** > **Protection** > **Conditional Access** (or **Conditional Access** > **Policies**).
-2. **Open Container:** Click **+ New policy** (or click your existing `CA-Block-Engineering-Boundary` policy container to open it).
-3. **Configure User Scope (The Include/Exclude Gate):**
-   * Under *Assignments*, click on **Users or workload identities**.
-   * On the active **Include** tab, choose the radio button for **Select users and groups**, and check the box for **Users and groups**.
-   * A search bar will appear below. Search for and select your macro container group: `ABAC-Engineers-Tier3-Quantum`.
-   * Look directly to the right and click on the **Exclude** tab.
-   * Choose the radio button for **Select users and groups**, check the box for **Users and groups**, search for and select your new dynamic group: `ABAC-Authorized-Tier3-Quantum`. Click the blue **Select** button.
+1. **Navigate to Policies:** In the left menu of the Entra admin center, go to **Identity** > **Protection** > **Conditional Access**.
+2. **Create New Container:** Click **+ New policy** from the top menu bar to open a fresh, clean-slate policy configuration workspace.
+3. **Name the Policy:** In the **Name** text field at the very top of the blade, type exactly: `ABAC-Office365-Enforcement-Gate`
 4. **Target the Resource Plane:**
    * Click on **Target resources** (formerly Cloud apps). Ensure the top dropdown is set to **Cloud apps**.
    * On the **Include** tab, select the radio button for **Select resources**.
