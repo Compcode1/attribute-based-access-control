@@ -140,3 +140,90 @@ Because the Microsoft Entra ID (MEID) Conditional Access (CA) policy engine cann
 We execute separate private browser sessions to witness the identity evaluation in real-time:
 * **Bravo Engineer Test:** Bravo attempts a sign-in. The engine reads their fields (`Tier1` / `ProjectLegacy`), flags the mismatch against the required parameters, and triggers an immediate **Access Denied** block screen.
 * **Alpha Engineer Test:** Alpha attempts a sign-in. The engine reads their fields (`Tier3` / `ProjectQuantum`), confirms the match, bypasses the block rule, and successfully **Authorizes** the login.
+
+
+
+================================================================================
+PROJECT POST-MORTEM & ARCHITECTURAL RETROSPECTIVE
+PROJECT: ATTRIBUTE-BASED ACCESS CONTROL (ABAC) PERIMETER GATE
+================================================================================
+
+1. PROJECT INTENT AND STRATEGY
+--------------------------------------------------------------------------------
+The objective of this engineering project was to deploy an Attribute-Based Access 
+Control (ABAC) perimeter gate within our Microsoft Entra ID (MEID) identity 
+infrastructure. The core strategy relied on utilizing native user directory 
+attributes—specifically Job Title and Department—to dynamically govern access, 
+rather than relying on brittle manual assignments. 
+
+The plan was to catch a broad set of engineering accounts within a large static 
+group container, and then use a dynamic group to build an automated "exclusion 
+hatch" for highly qualified accounts. By tying a Conditional Access (CA) block 
+policy to these groups, we intended to achieve a clean operational outcome: Alpha 
+Engineer (Source) would pass the gate smoothly based on their attributes, while 
+Bravo Engineer (Source) would be blocked entirely at the front door.
+
+2. COMPONENT DEPLOYMENT AND ASSIGNMENTS
+--------------------------------------------------------------------------------
+The project architecture was built using the following structural components:
+
+* Labeled Identities:
+  - Alpha Engineer (Source): Configured with directory attributes Job Title 
+    "Tier3" and Department "ProjectQuantum". (Authorized Path)
+  - Bravo Engineer (Source): Configured with directory attributes Job Title 
+    "Tier1" and Department "ProjectLegacy". (Unauthorized Path)
+* Group Containers:
+  - Macro Static Group (ABAC-Engineers-Tier3-Quantum): Acted as the primary net. 
+    Both Alpha and Bravo were added as direct, manual members.
+  - Micro Dynamic Group (ABAC-Authorized-Tier3-Quantum): Acted as the filter gate. 
+    Governed by the syntax rule: (user.jobTitle -eq "Tier3") -and (user.department -eq "ProjectQuantum").
+* Enforcement Policy:
+  - Policy Name: ABAC-Office365-Enforcement-Gate
+  - Target Resources: Bound to the "Office 365" application bundle and the 
+    "Microsoft 365 Home" (Office Home) landing portal.
+  - Assignments: Explicitly INCLUDED the Macro Static Group and explicitly 
+    EXCLUDED the Micro Dynamic Group.
+  - Access Control: Set to a hard boolean "Block Access".
+
+3. REAL-WORLD FAILURE ANALYSIS & SIGN-IN LOG VERIFICATION
+--------------------------------------------------------------------------------
+During live verification loops, the implemented architecture failed to secure the 
+perimeter. Bravo Engineer (Source) was consistently able to bypass the block and 
+successfully log into the cloud workspace across multiple desktop and mobile 
+endpoints. 
+
+Review of the MEID sign-in logs exposed a critical failure in policy execution. 
+For both Alpha and Bravo, the Conditional Access (CA) engine evaluated the policy 
+as "Not Applied". This hard boolean status proves that the identity engine was 
+skipping our security rule entirely. 
+
+The technical breakdown of why this occurred comes down to two real-world factors:
+1. Token Cache and PRT Persistence: Because we were changing policy configurations 
+   back-to-back on the same accounts, the local testing endpoints heavily cached 
+   previous login tokens. The workstations silently used active Primary Refresh 
+   Tokens (PRT) to mint new Access Tokens (AT) and Refresh Tokens (RT) in the 
+   background. The cloud directory saw these sessions as "previously satisfied" 
+   and waved the traffic through without re-evaluating the updated live policy.
+2. Application Principal Mismatches: The front-door landing page app (Office Home) 
+   utilizes underlying service principal IDs that frequently route outside the 
+   standard Office 365 application bundle scope. This meant the login requests 
+   failed to trigger an exact match inside the policy's target app criteria, 
+   causing the engine to bypass the rule.
+
+4. STRATEGIC PROJECT CONCLUSION
+--------------------------------------------------------------------------------
+In a production deployment, when an identity architecture falls into an unstable, 
+heavily cached state with overlapping service principal routing conflicts, chasing 
+individual browser states becomes an inefficient use of engineering time. The 
+sheer volume of overlapping variables means we reached the definitive point where 
+continuing to patch the current deployment is no longer viable. 
+
+The standard real-world engineering solution to this issue is to deprecate the 
+unstable policy framework entirely, purge the cached directory states, and rebuild 
+the logic from a clean, known-good baseline. Rather than executing a complete 
+reconfiguration loop and burning excessive hours troubleshooting backend cloud 
+propagation delays, the project has been officially concluded. The lab provided 
+highly valuable insights into token persistence behavior and the hidden traps of 
+portal application routing, making it a successful learning exercise despite the 
+operational halt.
+================================================================================
